@@ -1,0 +1,77 @@
+#!/usr/bin/expect
+
+set timeout -1
+
+switch $env(NETWORK) {
+    simnet {
+        set choice 1
+    }
+    testnet {
+        set choice 2
+    }
+    mainnet {
+        set choice 3
+    }
+}
+
+#set hostfs [exec printf "%q" "\"$env(HOSTFS)\""]
+#set hosthome [exec printf "%q" "\"$env(HOSTHOME)\""]
+#set hostpwd [exec printf "%q" "\"$env(HOSTPWD)\""]
+#set docker_sock $env(DOCKER_SOCK)
+
+set hostfs $env(HOSTFS)
+set hosthome $env(HOSTHOME)
+set hostpwd $env(HOSTPWD)
+set docker_sock $env(DOCKER_SOCK)
+
+#spawn bash /xud.sh {*}$argv
+set cmd "HOSTFS=$hostfs HOSTHOME=$hosthome HOSTPWD=$hostpwd DOCKER_SOCK=$docker_sock bash /xud.sh $argv"
+spawn bash -c "$cmd" 
+
+expect "network: "
+send "$choice\r"
+
+expect {
+    "A new version is available. Would you like to upgrade (Warning: this may restart your environment and cancel all open orders)?" {
+        send "\r"
+        exp_continue
+    }
+    "Please choose: " {
+        send "1\r"
+        exp_continue
+    }
+    "Enter a password: " {
+        send "$env(PASSWORD)\r"
+        exp_continue
+    }
+    "Re-enter password: " {
+        send "$env(PASSWORD)\r"
+        exp_continue
+    }
+    "Press ENTER to continue..." {
+        send "\r"
+        exp_continue
+    }
+    "Enter path to backup location: " {
+        send "$env(BACKUPDIR)\r"
+        exp_continue
+    }
+    "Retry?" {
+        send "y\r"
+        exp_continue
+    }
+    "Enter master xud password: " {
+        send "$env(PASSWORD)\r"
+        exp_continue
+    }
+    "Do you want to close these?" {
+        send "y\r"
+        exp_continue
+    }
+    "simnet > " {
+        send "exit\r"
+    }
+}
+
+expect eof
+
